@@ -14,9 +14,6 @@ namespace TestApp
 
             STUNClient.ReceiveTimeout = 500;
             var queryResult = STUNClient.Query(stunEndPoint, STUNQueryType.ExactNAT, true, NATTypeDetectionRFC.Rfc5780);
-            
-            if (queryResult.QueryError != STUNQueryError.Success)
-                throw new Exception("Query Error: " + queryResult.QueryError.ToString());
 
             Console.WriteLine("PublicEndPoint: {0}", queryResult.PublicEndPoint);
             Console.WriteLine("LocalEndPoint: {0}", queryResult.LocalEndPoint);

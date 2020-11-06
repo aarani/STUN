@@ -28,22 +28,19 @@ namespace STUN.Attributes
             // didn't receive anything
             if (responseBuffer == null)
             {
-                result.QueryError = STUNQueryError.Timedout;
-                return result;
+                throw new StunRequestTimeout();
             }
 
             // try to parse message
             if (!message.TryParse(responseBuffer))
             {
-                result.QueryError = STUNQueryError.BadResponse;
-                return result;
+                throw new StunBadResponse();
             }
 
             // check trans id
             if (!STUNUtils.ByteArrayCompare(message.TransactionID, transID))
             {
-                result.QueryError = STUNQueryError.BadTransactionID;
-                return result;
+                throw new StunBadTransactionId();
             }
 
             // finds error-code attribute, used in case of binding error
@@ -56,21 +53,16 @@ namespace STUN.Attributes
                 if (errorAttr == null)
                 {
                     // we count a binding error without error-code attribute as bad response (no?)
-                    result.QueryError = STUNQueryError.BadResponse;
-                    return result;
+                    throw new StunBadResponse();
                 }
 
-                result.QueryError = STUNQueryError.ServerError;
-                result.ServerError = errorAttr.Error;
-                result.ServerErrorPhrase = errorAttr.Phrase;
-                return result;
+                throw new StunServerError(errorAttr.Error, errorAttr.Phrase);
             }
 
             // return if receive something else binding response
             if (message.MessageType != STUNMessageTypes.BindingResponse)
             {
-                result.QueryError = STUNQueryError.BadResponse;
-                return result;
+                throw new StunBadResponse();
             }
 
             // not used for now.
@@ -84,8 +76,7 @@ namespace STUN.Attributes
                 as STUNMappedAddressAttribute;
             if (mappedAddressAttr == null)
             {
-                result.QueryError = STUNQueryError.BadResponse;
-                return result;
+                throw new StunBadResponse(); 
             }
             else
             {
@@ -95,7 +86,6 @@ namespace STUN.Attributes
             // stop querying and return the public ip if user just wanted to know public ip
             if (queryType == STUNQueryType.PublicIP)
             {
-                result.QueryError = STUNQueryError.Success;
                 return result;
             }
 
@@ -113,26 +103,22 @@ namespace STUN.Attributes
                 // if we didnt receive a response
                 if (responseBuffer == null)
                 {
-                    result.QueryError = STUNQueryError.Success;
                     result.NATType = STUNNATType.SymmetricUDPFirewall;
                     return result;
                 }
 
                 if (!message.TryParse(responseBuffer))
                 {
-                    result.QueryError = STUNQueryError.BadResponse;
-                    return result;
+                    throw new StunBadResponse();
                 }
 
                 if (!STUNUtils.ByteArrayCompare(message.TransactionID, transID))
                 {
-                    result.QueryError = STUNQueryError.BadTransactionID;
-                    return result;
+                    throw new StunBadTransactionId();
                 }
 
                 if (message.MessageType == STUNMessageTypes.BindingResponse)
                 {
-                    result.QueryError = STUNQueryError.Success;
                     result.NATType = STUNNATType.OpenInternet;
                     return result;
                 }
@@ -145,18 +131,14 @@ namespace STUN.Attributes
 
                     if (errorAttr == null)
                     {
-                        result.QueryError = STUNQueryError.BadResponse;
-                        return result;
+                        throw new StunBadResponse();
                     }
 
-                    result.QueryError = STUNQueryError.ServerError;
-                    result.ServerError = errorAttr.Error;
-                    result.ServerErrorPhrase = errorAttr.Phrase;
-                    return result;
+                    throw new StunServerError(errorAttr.Error, errorAttr.Phrase);
                 }
 
                 // the message type is wrong
-                result.QueryError = STUNQueryError.BadResponse;
+                throw new StunBadResponse();
                 return result;
             }
 
@@ -174,19 +156,16 @@ namespace STUN.Attributes
             {
                 if (!message.TryParse(responseBuffer))
                 {
-                    result.QueryError = STUNQueryError.BadResponse;
-                    return result;
+                    throw new StunBadResponse();
                 }
 
                 if (!STUNUtils.ByteArrayCompare(message.TransactionID, transID))
                 {
-                    result.QueryError = STUNQueryError.BadTransactionID;
-                    return result;
+                    throw new StunBadTransactionId();
                 }
 
                 if (message.MessageType == STUNMessageTypes.BindingResponse)
                 {
-                    result.QueryError = STUNQueryError.Success;
                     result.NATType = STUNNATType.FullCone;
                     return result;
                 }
@@ -199,24 +178,19 @@ namespace STUN.Attributes
 
                     if (errorAttr == null)
                     {
-                        result.QueryError = STUNQueryError.BadResponse;
-                        return result;
+                        throw new StunBadResponse();
                     }
 
-                    result.QueryError = STUNQueryError.ServerError;
-                    result.ServerError = errorAttr.Error;
-                    result.ServerErrorPhrase = errorAttr.Phrase;
-                    return result;
+                    throw new StunServerError(errorAttr.Error, errorAttr.Phrase);
                 }
 
-                result.QueryError = STUNQueryError.BadResponse;
+                throw new StunBadResponse();
                 return result;
             }
 
             // if user only wanted to know the NAT is open or not
             if (queryType == STUNQueryType.OpenNAT)
             {
-                result.QueryError = STUNQueryError.Success;
                 result.NATType = STUNNATType.Unspecified;
                 return result;
             }
@@ -225,7 +199,7 @@ namespace STUN.Attributes
             // because we send our request to this address instead of the first server address
             if (changedAddr == null)
             {
-                result.QueryError = STUNQueryError.BadResponse;
+                throw new StunBadResponse();
                 return result;
             }
             else
@@ -240,20 +214,18 @@ namespace STUN.Attributes
 
             if (responseBuffer == null)
             {
-                result.QueryError = STUNQueryError.Timedout;
-                return result;
+                throw new StunRequestTimeout();
             }
 
             if (!message.TryParse(responseBuffer))
             {
-                result.QueryError = STUNQueryError.BadResponse;
-                return result;
+                throw new StunBadResponse();
+                
             }
 
             if (!STUNUtils.ByteArrayCompare(message.TransactionID, transID))
             {
-                result.QueryError = STUNQueryError.BadTransactionID;
-                return result;
+                throw new StunBadTransactionId();
             }
 
             errorAttr =
@@ -263,20 +235,15 @@ namespace STUN.Attributes
             {
                 if (errorAttr == null)
                 {
-                    result.QueryError = STUNQueryError.BadResponse;
-                    return result;
+                    throw new StunBadResponse();
                 }
 
-                result.QueryError = STUNQueryError.ServerError;
-                result.ServerError = errorAttr.Error;
-                result.ServerErrorPhrase = errorAttr.Phrase;
-                return result;
+                throw new StunServerError(errorAttr.Error, errorAttr.Phrase);
             }
 
             if (message.MessageType != STUNMessageTypes.BindingResponse)
             {
-                result.QueryError = STUNQueryError.BadResponse;
-                return result;
+                throw new StunBadResponse();
             }
 
             mappedAddressAttr = message.Attributes.FirstOrDefault(p => p is STUNMappedAddressAttribute)
@@ -284,13 +251,11 @@ namespace STUN.Attributes
 
             if (mappedAddressAttr == null)
             {
-                result.QueryError = STUNQueryError.BadResponse;
-                return result;
+                throw new StunBadResponse();
             }
 
             if (!mappedAddressAttr.EndPoint.Equals(result.PublicEndPoint))
             {
-                result.QueryError = STUNQueryError.Success;
                 result.NATType = STUNNATType.Symmetric;
                 result.PublicEndPoint = null;
                 return result;
@@ -305,21 +270,18 @@ namespace STUN.Attributes
 
             if (responseBuffer == null)
             {
-                result.QueryError = STUNQueryError.Success;
                 result.NATType = STUNNATType.PortRestricted;
                 return result;
             }
 
             if (!message.TryParse(responseBuffer))
             {
-                result.QueryError = STUNQueryError.Timedout;
-                return result;
+                throw new StunRequestTimeout();
             }
 
             if (!STUNUtils.ByteArrayCompare(message.TransactionID, transID))
             {
-                result.QueryError = STUNQueryError.BadTransactionID;
-                return result;
+                throw new StunBadTransactionId();
             }
 
             errorAttr = message.Attributes.FirstOrDefault(p => p is STUNErrorCodeAttribute)
@@ -329,23 +291,17 @@ namespace STUN.Attributes
             {
                 if (errorAttr == null)
                 {
-                    result.QueryError = STUNQueryError.BadResponse;
-                    return result;
+                    throw new StunBadResponse();
                 }
 
-                result.QueryError = STUNQueryError.ServerError;
-                result.ServerError = errorAttr.Error;
-                result.ServerErrorPhrase = errorAttr.Phrase;
-                return result;
+                throw new StunServerError(errorAttr.Error, errorAttr.Phrase);
             }
 
             if (message.MessageType != STUNMessageTypes.BindingResponse)
             {
-                result.QueryError = STUNQueryError.BadResponse;
-                return result;
+                throw new StunBadResponse();
             }
 
-            result.QueryError = STUNQueryError.Success;
             result.NATType = STUNNATType.Restricted;
             return result;
         }

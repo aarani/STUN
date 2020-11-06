@@ -14,23 +14,6 @@ namespace STUN
         public STUNQueryType QueryType { get; set; }
 
         /// <summary>
-        /// The query result error
-        /// </summary>
-        public STUNQueryError QueryError { get; set; }
-
-        /// <summary>
-        /// Contains the server error code that receive from server.
-        /// Presents if <see cref="QueryError"/> set too <see cref="STUNQueryError.ServerError"/>
-        /// </summary>
-        public STUNErrorCodes ServerError { get; set; }
-
-        /// <summary>
-        /// Contains the server error phrase that receive from server.
-        /// Presents if <see cref="QueryError"/> set to <see cref="STUNQueryError.ServerError"/>
-        /// </summary>
-        public string ServerErrorPhrase { get; set; }
-
-        /// <summary>
         /// The socket that used to communicate with STUN server
         /// </summary>
         public Socket Socket { get; set; }
@@ -42,7 +25,7 @@ namespace STUN
 
         /// <summary>
         /// Contains the queried NAT Type.
-        /// Presents if <see cref="QueryError"/> set to <see cref="STUNQueryError.Success"/>
+        /// Presents if <see cref="QueryError"/> set to <see cref="STUNQueryExceptions.Success"/>
         /// </summary>
         public STUNNATType NATType { get; set; }
 

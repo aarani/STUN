@@ -31,22 +31,19 @@ namespace STUN
             // didn't receive anything
             if (responseBuffer == null)
             {
-                result.QueryError = STUNQueryError.Timedout;
-                return result;
+                throw new StunRequestTimeout();
             }
 
             // try to parse message
             if (!message.TryParse(responseBuffer))
             {
-                result.QueryError = STUNQueryError.BadResponse;
-                return result;
+                throw new StunBadResponse();
             }
 
             // check trans id
             if (!STUNUtils.ByteArrayCompare(message.TransactionID, transID))
             {
-                result.QueryError = STUNQueryError.BadTransactionID;
-                return result;
+                throw new StunBadTransactionId();
             }
 
             // finds error-code attribute, used in case of binding error
@@ -59,21 +56,16 @@ namespace STUN
                 if (errorAttr == null)
                 {
                     // we count a binding error without error-code attribute as bad response (no?)
-                    result.QueryError = STUNQueryError.BadResponse;
-                    return result;
+                    throw new StunBadResponse();
                 }
 
-                result.QueryError = STUNQueryError.ServerError;
-                result.ServerError = errorAttr.Error;
-                result.ServerErrorPhrase = errorAttr.Phrase;
-                return result;
+                throw new StunServerError(errorAttr.Error, errorAttr.Phrase);
             }
 
             // return if receive something else binding response
             if (message.MessageType != STUNMessageTypes.BindingResponse)
             {
-                result.QueryError = STUNQueryError.BadResponse;
-                return result;
+                throw new StunBadResponse();
             }
 
             var xorAddressAttribute = message.Attributes.FirstOrDefault(p => p is STUNXorMappedAddressAttribute)
@@ -81,8 +73,7 @@ namespace STUN
 
             if (xorAddressAttribute == null)
             {
-                result.QueryError = STUNQueryError.BadResponse;
-                return result;
+                throw new StunBadResponse();
             }
 
             result.PublicEndPoint = xorAddressAttribute.EndPoint;
@@ -90,7 +81,6 @@ namespace STUN
             // stop querying and return the public ip if user just wanted to know public ip
             if (queryType == STUNQueryType.PublicIP)
             {
-                result.QueryError = STUNQueryError.Success;
                 return result;
             }
 
@@ -110,8 +100,7 @@ namespace STUN
             {
                 if (changedAddressAttribute == null)
                 {
-                    result.QueryError = STUNQueryError.NotSupported;
-                    return result;
+                    throw new StunUnsupportedRequest();
                 }
 
                 otherAddressAttribute = new STUNOtherAddressAttribute();
@@ -128,14 +117,12 @@ namespace STUN
             // Secondary server presented but is down
             if (responseBuffer == null)
             {
-                result.QueryError = STUNQueryError.NotSupported;
-                return result;
+                throw new StunUnsupportedRequest();
             }
 
             if (!message.TryParse(responseBuffer))
             {
-                result.QueryError = STUNQueryError.NotSupported;
-                return result;
+                throw new StunUnsupportedRequest();
             }
 
             var xorAddressAttribute2 = message.Attributes.FirstOrDefault(p => p is STUNXorMappedAddressAttribute)
@@ -160,8 +147,7 @@ namespace STUN
 
                     if (!message.TryParse(responseBuffer))
                     {
-                        result.QueryError = STUNQueryError.NotSupported;
-                        return result;
+                        throw new StunUnsupportedRequest();
                     }
 
                     var xorAddressAttribute3 =
